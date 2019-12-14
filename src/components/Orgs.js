@@ -4,19 +4,17 @@ import { gitOrgs } from 'api-github-cli';
 
 export default props => {
   const [orgs, setOrgs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.debug(props)
     if(props && orgs.length === 0) {
       AsyncStorage.getItem('user_login').then(login => {
         gitOrgs(login).then(data => {
-          setOrgs(data);
-        }).catch(_ => {
-          if(Platform.OS === 'ios') {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          } else {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          }
+          setOrgs([...data]);
+          if(orgs.length === 0) setLoading(false);
+        }).catch(() => {
+          setLoading(false);
+          mensagens('Não foi possível recuperar a lista de repositórios.');
         })
       })
     } else {
@@ -35,30 +33,37 @@ export default props => {
   const Orgs = props => 
     <View style={styles.repo} >
       <View style={{alignItems: 'center' }}>
-        <Image style={styles.avatar} source={{uri: props.avatar_url}} />
+        <Image style={styles.avatar} source={{uri: props.avatar_url ? props.avatar_url : null }} />
         <Text style={styles.infoname}>{props.login}</Text>
       </View>
       <Text style={styles.title}>Description:</Text>
       <Text style={styles.info}>{props.description}</Text>
-      <Text style={styles.title}>Url:</Text>
-      <Text style={styles.info}>{props.url}</Text>
     </View>
 
   const renderItem = ({item}) => {
     return <Orgs {...item} />
   }
 
+  const Loading = () => {
+    return (
+      <View style={{ flex: 1, paddingVertical: 250 }}>
+        <ActivityIndicator size="large" color="#4F697D" />
+      </View>
+    )
+  }
+
+  const List = () => {
+    return <FlatList 
+      data={orgs} 
+      renderItem={renderItem} 
+      ListFooterComponent={loading && <Loading />}
+      keyExtractor={(_, index) => index.toString()} 
+    />
+  }
+
   return (
     <ScrollView style={styles.container}>
-      {
-        orgs.length === 0
-        ? (
-          <View style={{ flex: 1, paddingVertical: 250 }}>
-            <ActivityIndicator size="large" color="#4F697D" />
-          </View>
-        )
-        : (<FlatList data={orgs} renderItem={renderItem} keyExtractor={(_, index) => index.toString()} /> )
-      }
+      <List />
     </ScrollView>
   );
 }
@@ -101,6 +106,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     color: '#081C2A'
+  },
+
+  notList: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+    padding: 30
   }
 
 })

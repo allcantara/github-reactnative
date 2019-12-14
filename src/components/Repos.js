@@ -11,26 +11,24 @@ export const Repos = props =>
     <Text style={styles.title}>Private:</Text>
     <Text style={styles.info}>{props.private ? 'True' : 'False'}</Text>
     <Text style={styles.title}>Url:</Text>
-    <Text style={styles.info}>{props.url}</Text>
+    <Text style={styles.info}>{props.html_url}</Text>
     <Text style={styles.title}>Language:</Text>
     <Text style={styles.info}>{props.language}</Text>
   </View>
 
 export default props => {
   const [repos, setRepos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.debug(props)
     if(props && repos.length === 0) {
       AsyncStorage.getItem('user_login').then(login => {
         gitRepos(login).then(data => {
-          setRepos(data);
-        }).catch(_ => {
-          if(Platform.OS === 'ios') {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          } else {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          }
+          setRepos([...data]);
+          if(repos.length === 0) setLoading(false);
+        }).catch(() => {
+          setLoading(false);
+          mensagens('Não foi possível recuperar a lista de repositórios.');
         })
       })
     } else {
@@ -50,17 +48,26 @@ export default props => {
     return <Repos {...item} />
   }
 
+  const Loading = () => {
+    return (
+      <View style={{ flex: 1, paddingVertical: 250 }}>
+        <ActivityIndicator size="large" color="#4F697D" />
+      </View>
+    )
+  }
+
+  const List = () => {
+    return <FlatList 
+      data={repos} 
+      renderItem={renderItem} 
+      ListFooterComponent={loading && <Loading />}
+      keyExtractor={(_, index) => index.toString()} 
+    />
+  }
+
   return (
     <ScrollView style={styles.container}>
-      {
-        repos.length === 0
-        ? (
-          <View style={{ flex: 1, paddingVertical: 250 }}>
-            <ActivityIndicator size="large" color="#4F697D" />
-          </View>
-        )
-        : (<FlatList data={repos} renderItem={renderItem} keyExtractor={(_, index) => index.toString()} /> )
-      }
+      <List />
     </ScrollView>
   );
 }

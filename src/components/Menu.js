@@ -13,12 +13,13 @@ import Orgs from './Orgs';
 import Follow from './Follow';
 
 export default function Menu(props) {
-  const [user, setUser] = useState('');
+  const [user, setUser] = useState({});
 
   useEffect(() => {
+    if(!user)
     AsyncStorage.getItem('user_login').then(login => {
       gitUser(login).then(data => {
-        setUser(data);
+        setUser({...data});
       });
     }).catch(_ => {
       if(Platform.OS === 'ios') {
@@ -80,12 +81,3 @@ export default function Menu(props) {
 
   return <Componente />
 }
-
-const styles = StyleSheet.create({
-  input: {
-    alignSelf: 'center',
-    paddingHorizontal: 15,
-    fontSize: 15
-  }
-})
-

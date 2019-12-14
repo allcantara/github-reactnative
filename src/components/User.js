@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { gitUser } from 'api-github-cli';
+import { View, Text, Image, StyleSheet, ActivityIndicator, AsyncStorage, Alert, Platform } from 'react-native';
 
 export default (props) => {
   const [user, setUser] = useState({avatar_url: '', name: '', bio: '', location: '', public_repos: false});
-
+  
   useEffect(() => {
-    if(props.user) {
-      setUser(props.user);
-    }
-  }, []);
+    if(!user.name) 
+    AsyncStorage.getItem('user_login').then(login => {
+      gitUser(login).then(data => {
+        setUser(data)
+      }).catch(() => {
+        if(Platform.OS === 'ios') {
+          Alert.alert('Atenção: ', 'Falha ao buscar os dados desde usuário.');
+        } else {
+          alert('Falha ao buscar os dados desde usuário.');
+        }
+      })
+    })
+  }, [user])
 
   return (
     <View style={styles.container}>
@@ -17,7 +27,7 @@ export default (props) => {
         ? (
           <>
           <View style={styles.header} >
-            <Image style={styles.avatar} source={{uri: user.avatar_url}} />
+            <Image style={styles.avatar} source={{uri: user.avatar_url ? user.avatar_url : null}} />
           </View>
           <View style={styles.datauser}>
             <View style={styles.center}>

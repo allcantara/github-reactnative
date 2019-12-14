@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ScrollView, FlatList, Text, Platform, Alert, AsyncStorage, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, ScrollView, FlatList, Text, Platform, Alert, AsyncStorage, ActivityIndicator } from 'react-native';
 import { gitFollowers } from 'api-github-cli';
 
 
 export default props => {
   const [follow, setFollow] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.debug(props)
     if(props && follow.length === 0) {
       AsyncStorage.getItem('user_login').then(login => {
         gitFollowers(login).then(data => {
-          setFollow(data);
-        }).catch(_ => {
-          if(Platform.OS === 'ios') {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          } else {
-            mensagens('Não foi possível recuperar a lista de repositórios.');
-          }
+          setFollow([...data]);
+          if(follow.length === 0) setLoading(false);
+        }).catch(() => {
+          setLoading(false);
+          mensagens('Não foi possível recuperar a lista de repositórios.');
         })
       })
     } else {
@@ -33,36 +31,40 @@ export default props => {
     }
   }
 
-  const handleFollow = data => {
-    AsyncStorage.setItem('user_login', data.login);
-    //props.call.callback.navigation.push('Main');
-  }
-
   const Follow = props => 
-  <TouchableOpacity style={styles.repo} onLongPress={() => handleFollow(props)} >
+  <View style={styles.repo}>
     <View style={styles.body}>
-      <Image style={styles.avatar} source={{uri: props.avatar_url}} />
+      <Image style={styles.avatar} source={{uri: props.avatar_url ? props.avatar_url : null}} />
       <Text style={styles.infoname}>@{props.login}</Text>
     </View>
     <Text style={styles.title}>Url:</Text>
-    <Text style={styles.info}>{props.url}</Text>
-  </TouchableOpacity>
+    <Text style={styles.info}>{props.html_url}</Text>
+  </View>
 
   const renderItem = ({item}) => {
     return <Follow {...item} />
   }
 
+  const Loading = () => {
+    return (
+      <View style={{ flex: 1, paddingVertical: 250 }}>
+        <ActivityIndicator size="large" color="#4F697D" />
+      </View>
+    )
+  }
+
+  const List = () => {
+    return <FlatList 
+    data={follow} 
+    renderItem={renderItem} 
+    ListFooterComponent={loading && <Loading />}
+    keyExtractor={(_, index) => index.toString()} 
+  />
+}
+
   return (
     <ScrollView style={styles.container}>
-      {
-        follow.length === 0
-        ? (
-          <View style={{ flex: 1, paddingVertical: 250 }}>
-            <ActivityIndicator size="large" color="#4F697D" />
-          </View>
-        )
-        : (<FlatList data={follow} renderItem={renderItem} keyExtractor={(_, index) => index.toString()} /> )
-      }
+      <List />
     </ScrollView>
   );
 }
