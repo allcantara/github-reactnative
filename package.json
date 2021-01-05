@@ -14,7 +14,7 @@
     "@react-native-community/async-storage": "^1.6.3",
     "add": "^2.0.6",
     "api-github-cli": "0.0.2",
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "expo": "^35.0.1",
     "github-api": "^3.3.0",
     "native-base": "^2.13.8",
